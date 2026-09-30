@@ -1,0 +1,51 @@
+# ==============================================================================
+# Micro-Redis Standalone Docker Compose Setup
+# Architecture: 1 Redis Instance (AOF + RDB Persistence) + Node.js Express App
+# ==============================================================================
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: micro-redis-db
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - ./docker/redis/redis.conf:/etc/redis/redis.conf:ro
+      - redis_standalone_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - redis-standalone-network
+    restart: unless-stopped
+
+  cache-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: micro-redis-app
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - REDIS_MODE=standalone
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_CONNECT_TIMEOUT=10000
+    ports:
+      - "3000:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - redis-standalone-network
+    restart: unless-stopped
+
+volumes:
+  redis_standalone_data:
+
+networks:
+  redis-standalone-network:
+    driver: bridge

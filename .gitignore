@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment files
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Redis data directories (local test volumes)
+data/
+dump.rdb
+appendonly.aof
+
+# OS generated files
+.DS_Store
+Thumbs.db

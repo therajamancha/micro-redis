@@ -1,0 +1,148 @@
+### ==============================================================================
+### Micro-Redis API Request Collection (REST Client / Thunder Client)
+### ==============================================================================
+
+@baseUrl = http://localhost:3000/api/cache
+
+### 1. Health Check
+GET {{baseUrl}}/health HTTP/1.1
+
+### 2. Metrics & Hit/Miss Statistics
+GET {{baseUrl}}/metrics HTTP/1.1
+
+### 3. Set Cache (String with TTL)
+POST {{baseUrl}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "user:session:1001",
+  "value": {
+    "userId": 1001,
+    "username": "johndoe",
+    "email": "johndoe@company.local",
+    "roles": ["admin", "editor"]
+  },
+  "ttl": 3600,
+  "type": "string"
+}
+
+### 4. Get Cache by Key
+GET {{baseUrl}}/user:session:1001 HTTP/1.1
+
+### 5. Set Cache (Hash Structure)
+POST {{baseUrl}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "user:profile:1001",
+  "value": {
+    "name": "John Doe",
+    "department": "Engineering",
+    "tier": "enterprise"
+  },
+  "ttl": 7200,
+  "type": "hash"
+}
+
+### 6. Get Hash by Key
+GET {{baseUrl}}/user:profile:1001 HTTP/1.1
+
+### 7. Atomic Increment / Rate Limiting
+POST {{baseUrl}}/increment HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "ratelimit:ip:192.168.1.50",
+  "amount": 1,
+  "ttl": 60
+}
+
+### 8. List - Push Item (Queue)
+POST {{baseUrl}}/list/push HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "queue:notifications",
+  "values": [
+    { "type": "EMAIL", "recipient": "user@example.com", "payload": "Welcome!" },
+    { "type": "SLACK", "channel": "#alerts", "payload": "System online" }
+  ],
+  "direction": "right"
+}
+
+### 9. List - Get Items (Range)
+GET {{baseUrl}}/list/queue:notifications?start=0&stop=-1 HTTP/1.1
+
+### 10. List - Pop Item (Worker consuming queue)
+POST {{baseUrl}}/list/pop HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "queue:notifications",
+  "direction": "left"
+}
+
+### 11. Set - Add Members (Tags / Unique IDs)
+POST {{baseUrl}}/set/add HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "tags:article:42",
+  "members": ["redis", "microservices", "nodejs", "high-availability"]
+}
+
+### 12. Set - Get All Members
+GET {{baseUrl}}/set/tags:article:42 HTTP/1.1
+
+### 13. Set - Check Membership
+POST {{baseUrl}}/set/ismember HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "tags:article:42",
+  "member": "high-availability"
+}
+
+### 14. Sorted Set - Add Leaderboard / Ranked Items
+POST {{baseUrl}}/zset/add HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "leaderboard:weekly",
+  "entries": [
+    { "member": "PlayerAlpha", "score": 9500 },
+    { "member": "PlayerBeta", "score": 12800 },
+    { "member": "PlayerGamma", "score": 8200 }
+  ]
+}
+
+### 15. Sorted Set - Get Top Ranked (Descending)
+GET {{baseUrl}}/zset/leaderboard:weekly?reverse=true&start=0&stop=-1 HTTP/1.1
+
+### 16. Stream - Add Event Entry
+POST {{baseUrl}}/stream/add HTTP/1.1
+Content-Type: application/json
+
+{
+  "key": "events:audit:log",
+  "data": {
+    "action": "CONFIG_UPDATE",
+    "actor": "admin_johndoe",
+    "ip": "10.0.0.1",
+    "timestamp": "2026-09-30T08:00:00Z"
+  }
+}
+
+### 17. Stream - Read Events
+GET {{baseUrl}}/stream/events:audit:log?count=10 HTTP/1.1
+
+### 18. Purge Keys by Pattern
+POST {{baseUrl}}/purge HTTP/1.1
+Content-Type: application/json
+
+{
+  "pattern": "user:*"
+}
+
+### 19. Delete Specific Key
+DELETE {{baseUrl}}/user:session:1001 HTTP/1.1
